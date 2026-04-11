@@ -23,18 +23,21 @@ jobs:
 
       - name: Create Missing Config Files
         run: |
-          # Create local.properties
           touch local.properties
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
           echo "GEMINI_API_KEY=dummy_key" >> local.properties
           echo "BASE_URL=https://generativelanguage.googleapis.com/" >> local.properties
           
-          # Create dummy google-services.json
-          echo '{
+          cat << 'EOF' > app/google-services.json
+          {
             "project_info": { "project_number": "123", "project_id": "dummy" },
-            "client": [ { "client_info": { "mobilesdk_app_id": "1:123:android:123", "android_client_info": { "package_name": "com.blurr.voice" } } } ],
+            "client": [ {
+              "client_info": { "mobilesdk_app_id": "1:123:android:123", "android_client_info": { "package_name": "com.blurr.voice" } },
+              "api_key": [ { "current_key": "dummy_api_key" } ]
+            } ],
             "configuration_version": "1"
-          }' > app/google-services.json
+          }
+          EOF
 
       - name: Accept Android Licenses
         run: yes | sdkmanager --licenses || true
