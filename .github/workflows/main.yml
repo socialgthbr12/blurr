@@ -1,8 +1,7 @@
-name: Build APK
+ name: Build APK
 on: [workflow_dispatch]
 
 env:
-  # This stops the Node.js 24 warning message
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -18,10 +17,20 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Create Dummy Local Properties
+      - name: Create Missing Config Files
         run: |
-          cp local.properties.template local.properties || touch local.properties
+          # Create local.properties
+          touch local.properties
           echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
+          echo "GEMINI_API_KEY=dummy_key" >> local.properties
+          echo "BASE_URL=https://generativelanguage.googleapis.com/" >> local.properties
+          
+          # Create dummy google-services.json to satisfy the plugin
+          echo '{
+            "project_info": { "project_number": "123", "project_id": "dummy" },
+            "client": [ { "client_info": { "mobilesdk_app_id": "1:123:android:123", "android_client_info": { "package_name": "com.blurr.voice" } } } ],
+            "configuration_version": "1"
+          }' > app/google-services.json
 
       - name: Accept Android Licenses
         run: yes | sdkmanager --licenses || true
@@ -29,7 +38,7 @@ jobs:
       - name: Build APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon -Pandroid.quietLint=true
           
       - name: Upload APK
         uses: actions/upload-artifact@v4
